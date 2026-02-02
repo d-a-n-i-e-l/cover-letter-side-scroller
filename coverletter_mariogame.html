@@ -1,0 +1,916 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Day — Cover Letter (Side-Scroller)</title>
+  <style>
+    :root {
+      --bg: #0b1020;
+      --panel: rgba(0,0,0,0.55);
+      --text: #f6f7fb;
+      --muted: rgba(246,247,251,0.8);
+      --accent: #7ee787;
+      --warn: #ffd166;
+      --danger: #ff5c7a;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+      background: radial-gradient(1200px 700px at 30% 20%, #1a2a6c 0%, #0b1020 55%, #060815 100%);
+      color: var(--text);
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+      overflow: hidden;
+    }
+
+    .wrap {
+      height: 100%;
+      display: grid;
+      grid-template-rows: auto 1fr auto;
+      gap: 10px;
+      padding: 14px;
+      box-sizing: border-box;
+    }
+
+    header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .brand {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      line-height: 1.1;
+    }
+
+    .brand .title {
+      font-size: 18px;
+      font-weight: 800;
+      letter-spacing: 0.2px;
+    }
+
+    .brand .subtitle {
+      font-size: 13px;
+      color: var(--muted);
+    }
+
+    .hud {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
+
+    .pill {
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.14);
+      backdrop-filter: blur(8px);
+      border-radius: 999px;
+      padding: 8px 10px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .pill b { color: var(--text); }
+
+    main {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      border: 1px solid rgba(255,255,255,0.14);
+      background: linear-gradient(180deg, rgba(255,255,255,0.06), rgba(255,255,255,0.02));
+      box-shadow: 0 18px 50px rgba(0,0,0,0.45);
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      image-rendering: pixelated;
+    }
+
+    .overlay {
+      position: absolute;
+      left: 14px;
+      top: 14px;
+      max-width: min(420px, calc(100% - 28px));
+      background: var(--panel);
+      border: 1px solid rgba(255,255,255,0.14);
+      border-radius: 16px;
+      padding: 12px 12px;
+      backdrop-filter: blur(10px);
+    }
+
+    .overlay h2 {
+      margin: 0 0 6px 0;
+      font-size: 14px;
+      letter-spacing: 0.2px;
+    }
+
+    .overlay p {
+      margin: 0;
+      font-size: 13px;
+      color: var(--muted);
+      line-height: 1.35;
+    }
+
+    .overlay .row {
+      display: flex;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    button {
+      border: 1px solid rgba(255,255,255,0.18);
+      background: rgba(255,255,255,0.06);
+      color: var(--text);
+      border-radius: 12px;
+      padding: 8px 10px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: transform 120ms ease, background 120ms ease;
+    }
+
+    button:hover { background: rgba(255,255,255,0.10); }
+    button:active { transform: translateY(1px); }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+      color: rgba(255,255,255,0.7);
+      font-size: 12px;
+    }
+
+    a { color: #9ddcff; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .sr {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      padding: 0;
+      margin: -1px;
+      overflow: hidden;
+      clip: rect(0,0,0,0);
+      white-space: nowrap;
+      border-width: 0;
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <div class="brand">
+        <div class="title">Day Ham — Side‑Scroller Cover Letter</div>
+        <div class="subtitle">A Mario‑era vibe, but it’s your GTM story. Run right → hit flags → read highlights.</div>
+      </div>
+      <div class="hud">
+        <div class="pill"><b>Controls</b>: ← → / A D, <b>Jump</b>: Space / W / ↑</div>
+        <div class="pill"><b>Flags</b>: <span id="flagCount">0</span> discovered</div>
+        <div class="pill"><b>Resume</b>: <a href="#" id="resumeLink">add link</a></div>
+      </div>
+    </header>
+
+    <main>
+      <canvas id="game" aria-label="Side-scrolling cover letter"></canvas>
+
+      <div class="overlay" id="panel" role="dialog" aria-live="polite" aria-label="Flag details" style="display:none;">
+        <h2 id="panelTitle">Flag</h2>
+        <p id="panelBody"></p>
+        <div class="row">
+          <button id="closeBtn">Close (Esc)</button>
+          <button id="copyBtn">Copy snippet</button>
+          <button id="nextBtn">Next flag →</button>
+        </div>
+      </div>
+
+      <div class="overlay" id="intro" style="max-width: min(520px, calc(100% - 28px));">
+        <h2>How this works</h2>
+        <p>
+          This is a tiny “SNES‑ish” side‑scroller. Each flag is a cover‑letter section.
+          Run into a flag to pop the panel. Recruiter‑friendly: the content is also in HTML (view‑source).
+        </p>
+        <div class="row">
+          <button id="startBtn">Start</button>
+          <button id="skipBtn">Open all flags</button>
+        </div>
+      </div>
+
+      <div class="sr" id="srAnnounce"></div>
+    </main>
+
+    <footer>
+      <div>Tip: edit the <b>FLAGS</b> array in the code to customize your experience bullets.</div>
+      <div>Hosting: Firebase Hosting / GitHub Pages / Vercel — any static host works.</div>
+    </footer>
+  </div>
+
+  <script>
+    // =========================
+    // 1) EDIT YOUR CONTENT HERE
+    // =========================
+    // Keep these short and punchy. Think of them as “flag text” plus a recruiter-friendly paragraph.
+    const PROFILE = {
+      name: "Day Ham",
+      role: "Go-to-Market / Product Operations Program Manager",
+      email: "your.email@example.com",
+      linkedin: "https://www.linkedin.com/in/your-handle",
+      portfolio: "https://your-site.com",
+      resumeUrl: "https://your-resume-link.com" // optional
+    };
+
+    const FLAGS = [
+      {
+        id: "start",
+        label: "Spawn Point",
+        title: "Hi — I’m Day. Here’s the short version.",
+        body: "I run complex GTM programs end-to-end: tight XFN coordination, crisp exec visibility, and mechanisms that actually reduce chaos. I also build lightweight AI workflows to remove grunt work and speed up decisions.",
+        color: "#7ee787"
+      },
+      {
+        id: "amazon_gtm",
+        label: "Amazon / Blink",
+        title: "GTM execution at scale",
+        body: "Own launch readiness across multiple workstreams: timelines, dependencies, risk triage, and escalation paths. I’m the person who turns ‘a thousand opinions’ into a single plan teams can ship against — without losing stakeholder trust.",
+        color: "#9ddcff"
+      },
+      {
+        id: "mechanisms",
+        label: "Mechanisms",
+        title: "Mechanisms > meetings",
+        body: "I build repeatable operating rhythms: clear owners, definitions of done, dashboards, and decision logs. The goal is fewer status meetings and more predictable delivery.",
+        color: "#ffd166"
+      },
+      {
+        id: "ai_ops",
+        label: "AI Ops",
+        title: "AI as leverage, not a party trick",
+        body: "I use AI to automate tedious work (comms, lists, templates, summaries) and to improve signal quality — while keeping humans in the loop for judgment calls. Net: faster cycles, cleaner artifacts, fewer mistakes.",
+        color: "#c5a3ff"
+      },
+      {
+        id: "product_sense",
+        label: "Product sense",
+        title: "Product sense + execution",
+        body: "I’m strongest when the program is messy: ambiguous goals, competing incentives, and a tight timeline. I translate customer/partner constraints into prioritization and crisp trade-offs.",
+        color: "#ff8fb1"
+      },
+      {
+        id: "why_you",
+        label: "Why you",
+        title: "Why this role",
+        body: "Because I like the part where things are hard: cross-org alignment, launch orchestration, and making the plan real. I’m looking for a team that values ownership, clarity, and momentum.",
+        color: "#7ee787"
+      },
+      {
+        id: "end",
+        label: "Goal Flag",
+        title: "Let’s talk.",
+        body: "If you want a program leader who can drive GTM with calm urgency — and ship better by building strong mechanisms — I’d love to chat. Reply anytime and I’ll send any additional materials.",
+        color: "#ffffff"
+      }
+    ];
+
+    // ==================================
+    // 2) TINY ENGINE (no dependencies)
+    // ==================================
+
+    // Canvas setup
+    const canvas = document.getElementById('game');
+    const ctx = canvas.getContext('2d');
+    const panel = document.getElementById('panel');
+    const intro = document.getElementById('intro');
+    const panelTitle = document.getElementById('panelTitle');
+    const panelBody = document.getElementById('panelBody');
+    const flagCountEl = document.getElementById('flagCount');
+    const resumeLink = document.getElementById('resumeLink');
+    const srAnnounce = document.getElementById('srAnnounce');
+
+    // Buttons
+    const closeBtn = document.getElementById('closeBtn');
+    const copyBtn = document.getElementById('copyBtn');
+    const nextBtn = document.getElementById('nextBtn');
+    const startBtn = document.getElementById('startBtn');
+    const skipBtn = document.getElementById('skipBtn');
+
+    resumeLink.textContent = PROFILE.resumeUrl ? 'resume link' : 'add link';
+    if (PROFILE.resumeUrl) resumeLink.href = PROFILE.resumeUrl;
+
+    // Resize canvas to fill main
+    function resize() {
+      const rect = canvas.getBoundingClientRect();
+      canvas.width = Math.floor(rect.width * devicePixelRatio);
+      canvas.height = Math.floor(rect.height * devicePixelRatio);
+      ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // World settings
+    const WORLD = {
+      groundY: 0,
+      gravity: 1800,
+      friction: 0.82,
+      runAccel: 1200,
+      maxSpeed: 340,
+      jumpVel: 650,
+      cameraLerp: 0.10,
+      tile: 32,
+      length: 4200 // px
+    };
+
+    // Derive ground based on canvas height
+    function updateGround() {
+      const h = canvas.getBoundingClientRect().height;
+      WORLD.groundY = Math.max(120, h - 90);
+    }
+    updateGround();
+    window.addEventListener('resize', updateGround);
+
+    // Player
+    const player = {
+      x: 80,
+      y: 0,
+      w: 22,
+      h: 28,
+      vx: 0,
+      vy: 0,
+      onGround: false,
+      facing: 1,
+      color: '#ff5c7a'
+    };
+
+    // Flags placed across the world
+    const placedFlags = FLAGS.map((f, i) => {
+      const pad = 180;
+      const span = (WORLD.length - pad * 2) / (FLAGS.length - 1);
+      return {
+        ...f,
+        x: pad + i * span,
+        y: 0,
+        w: 14,
+        h: 74,
+        discovered: false
+      };
+    });
+
+    // Simple platforms for vibes
+    const platforms = [
+      // x, y, w, h
+      { x: 260, y: -90, w: 120, h: 18 },
+      { x: 620, y: -140, w: 140, h: 18 },
+      { x: 1030, y: -110, w: 160, h: 18 },
+      { x: 1510, y: -160, w: 140, h: 18 },
+      { x: 1960, y: -120, w: 180, h: 18 },
+      { x: 2470, y: -170, w: 160, h: 18 },
+      { x: 3000, y: -130, w: 200, h: 18 },
+      { x: 3510, y: -180, w: 180, h: 18 }
+    ];
+
+    // Camera
+    const cam = { x: 0 };
+
+    // Input
+    const keys = new Set();
+    const keyMap = {
+      left: ['ArrowLeft', 'a', 'A'],
+      right: ['ArrowRight', 'd', 'D'],
+      jump: [' ', 'ArrowUp', 'w', 'W']
+    };
+
+    function isDown(group) {
+      return keyMap[group].some(k => keys.has(k));
+    }
+
+    window.addEventListener('keydown', (e) => {
+      if ([...keyMap.left, ...keyMap.right, ...keyMap.jump, 'Escape'].includes(e.key)) e.preventDefault();
+      keys.add(e.key);
+
+      if (e.key === 'Escape' && panel.style.display !== 'none') {
+        hidePanel();
+      }
+
+      // jump on keydown for snappy feel
+      if (keyMap.jump.includes(e.key) && !isPaused() && player.onGround) {
+        player.vy = -WORLD.jumpVel;
+        player.onGround = false;
+      }
+    }, { passive: false });
+
+    window.addEventListener('keyup', (e) => {
+      keys.delete(e.key);
+    });
+
+    // Panel logic
+    let activeFlagIndex = 0;
+
+    // Flag close/reopen guard so Esc doesn't immediately re-trigger the same flag
+    let flagCooldownUntil = 0; // performance.now() timestamp
+    const FLAG_IGNORE_MS_AFTER_CLOSE = 650; // ms
+    const FLAG_EJECT_X = 18; // px past the pole
+    const FLAG_EJECT_VX = 260; // momentum to keep moving right
+
+
+    function showPanel(flagIndex) {
+      const f = placedFlags[flagIndex];
+      activeFlagIndex = flagIndex;
+      panelTitle.textContent = f.title;
+      panelBody.textContent = f.body;
+      panel.style.display = 'block';
+      srAnnounce.textContent = `Opened flag: ${f.title}`;
+    }
+
+    function hidePanel() {
+      panel.style.display = 'none';
+      srAnnounce.textContent = 'Closed flag panel';
+    }
+
+    function isPaused() {
+      return panel.style.display !== 'none' || intro.style.display !== 'none';
+    }
+
+    closeBtn.addEventListener('click', hidePanel);
+
+    copyBtn.addEventListener('click', async () => {
+      const f = placedFlags[activeFlagIndex];
+      const text = `${f.title}\n${f.body}\n\n— ${PROFILE.name} (${PROFILE.role})`;
+      try {
+        await navigator.clipboard.writeText(text);
+        copyBtn.textContent = 'Copied!';
+        setTimeout(() => (copyBtn.textContent = 'Copy snippet'), 900);
+      } catch {
+        copyBtn.textContent = 'Copy failed';
+        setTimeout(() => (copyBtn.textContent = 'Copy snippet'), 900);
+      }
+    });
+
+    nextBtn.addEventListener('click', () => {
+      const next = Math.min(activeFlagIndex + 1, placedFlags.length - 1);
+      showPanel(next);
+    });
+
+    startBtn.addEventListener('click', () => {
+      intro.style.display = 'none';
+    });
+
+    skipBtn.addEventListener('click', () => {
+      intro.style.display = 'none';
+      // Mark all discovered and open first
+      placedFlags.forEach(f => f.discovered = true);
+      updateFlagCount();
+      showPanel(0);
+    });
+
+    function updateFlagCount() {
+      const n = placedFlags.filter(f => f.discovered).length;
+      flagCountEl.textContent = String(n);
+    }
+    updateFlagCount();
+
+    // Collision helpers
+    function rectsOverlap(ax, ay, aw, ah, bx, by, bw, bh) {
+      return ax < bx + bw && ax + aw > bx && ay < by + bh && ay + ah > by;
+    }
+
+    function groundY() {
+      return WORLD.groundY;
+    }
+
+    // Time
+    let last = performance.now();
+
+    function step(now) {
+      const dt = Math.min(0.033, (now - last) / 1000);
+      last = now;
+
+      if (!isPaused()) {
+        tick(dt);
+      }
+      draw();
+      requestAnimationFrame(step);
+    }
+
+    function tick(dt) {
+      // Horizontal movement
+      let ax = 0;
+      if (isDown('left')) ax -= WORLD.runAccel;
+      if (isDown('right')) ax += WORLD.runAccel;
+
+      if (ax !== 0) {
+        player.facing = ax > 0 ? 1 : -1;
+      }
+
+      player.vx += ax * dt;
+
+      // Clamp speed
+      if (player.vx > WORLD.maxSpeed) player.vx = WORLD.maxSpeed;
+      if (player.vx < -WORLD.maxSpeed) player.vx = -WORLD.maxSpeed;
+
+      // Friction when no input
+      if (ax === 0) {
+        player.vx *= Math.pow(WORLD.friction, dt * 60);
+        if (Math.abs(player.vx) < 8) player.vx = 0;
+      }
+
+      // Gravity
+      player.vy += WORLD.gravity * dt;
+
+      // Integrate
+      player.x += player.vx * dt;
+      player.y += player.vy * dt;
+
+      // World bounds
+      player.x = Math.max(12, Math.min(WORLD.length - 12 - player.w, player.x));
+
+      // Ground collision
+      const gy = groundY();
+      if (player.y + player.h >= gy) {
+        player.y = gy - player.h;
+        player.vy = 0;
+        player.onGround = true;
+      } else {
+        player.onGround = false;
+      }
+
+      // Platform collisions (simple: only from above)
+      for (const p of platforms) {
+        const px = p.x;
+        const py = gy + p.y; // p.y is offset above ground
+        if (rectsOverlap(player.x, player.y, player.w, player.h, px, py, p.w, p.h)) {
+          // Only land if falling and coming from above
+          const prevY = player.y - player.vy * dt;
+          if (player.vy > 0 && prevY + player.h <= py + 6) {
+            player.y = py - player.h;
+            player.vy = 0;
+            player.onGround = true;
+          }
+        }
+      }
+
+      // Flag collisions
+      const now = performance.now();
+      if (now >= flagCooldownUntil) {
+        for (let i = 0; i < placedFlags.length; i++) {
+          const f = placedFlags[i];
+          const fx = f.x;
+          const fy = gy - f.h;
+          if (rectsOverlap(player.x, player.y, player.w, player.h, fx, fy, f.w, f.h)) {
+            if (!f.discovered) {
+              f.discovered = true;
+              updateFlagCount();
+            }
+            // Open panel
+            showPanel(i);
+            break;
+          }
+        }
+      }
+
+      // Camera follows player
+      const viewW = canvas.getBoundingClientRect().width;
+      const target = Math.max(0, Math.min(WORLD.length - viewW, player.x - viewW * 0.35));
+      cam.x += (target - cam.x) * WORLD.cameraLerp;
+    }
+
+    // Drawing helpers
+    function px(x) { return Math.floor(x) + 0.5; }
+
+    function drawSky(w, h) {
+      // Stars
+      ctx.save();
+      ctx.globalAlpha = 0.55;
+      for (let i = 0; i < 80; i++) {
+        const sx = (i * 97) % w;
+        const sy = (i * 53) % (h * 0.6);
+        const r = (i % 3) + 1;
+        ctx.fillStyle = `rgba(255,255,255,${0.15 + (i%5)*0.05})`;
+        ctx.fillRect(sx, sy, r, r);
+      }
+      ctx.restore();
+
+      // Distant hills
+      ctx.save();
+      ctx.globalAlpha = 0.35;
+      ctx.fillStyle = '#0b1d3a';
+      ctx.beginPath();
+      ctx.moveTo(0, h);
+      for (let x = 0; x <= w; x += 90) {
+        const y = h * 0.72 + Math.sin((x + cam.x * 0.2) / 180) * 18;
+        ctx.quadraticCurveTo(x + 45, y - 35, x + 90, y);
+      }
+      ctx.lineTo(w, h);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+    }
+
+    function drawGround(w, h) {
+      const gy = groundY();
+      ctx.save();
+      // ground
+      ctx.fillStyle = 'rgba(20, 28, 55, 0.95)';
+      ctx.fillRect(0, gy, w, h - gy);
+
+      // pixel grass edge
+      ctx.fillStyle = 'rgba(126, 231, 135, 0.25)';
+      for (let x = -Math.floor(cam.x) % 16; x < w; x += 16) {
+        ctx.fillRect(x, gy, 8, 3);
+      }
+
+      // tiles
+      ctx.globalAlpha = 0.45;
+      ctx.strokeStyle = 'rgba(255,255,255,0.14)';
+      for (let x = -Math.floor(cam.x) % WORLD.tile; x < w; x += WORLD.tile) {
+        ctx.beginPath();
+        ctx.moveTo(px(x), gy);
+        ctx.lineTo(px(x), h);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
+
+    function drawPlatform(p) {
+      const gy = groundY();
+      const x = p.x - cam.x;
+      const y = gy + p.y;
+      ctx.save();
+      ctx.fillStyle = 'rgba(255,255,255,0.10)';
+      ctx.fillRect(x, y, p.w, p.h);
+      ctx.strokeStyle = 'rgba(255,255,255,0.18)';
+      ctx.strokeRect(px(x), px(y), p.w, p.h);
+      // underside shadow
+      ctx.fillStyle = 'rgba(0,0,0,0.22)';
+      ctx.fillRect(x, y + p.h - 4, p.w, 4);
+      ctx.restore();
+    }
+
+    function drawFlag(f) {
+      const gy = groundY();
+      const x = f.x - cam.x;
+      const y = gy - f.h;
+      ctx.save();
+
+      // pole
+      ctx.fillStyle = 'rgba(255,255,255,0.8)';
+      ctx.fillRect(x, y, 3, f.h);
+
+      // banner
+      const wave = Math.sin((performance.now() / 250) + f.x / 140) * 3;
+      ctx.fillStyle = f.discovered ? f.color : 'rgba(255,255,255,0.22)';
+      ctx.fillRect(x + 3, y + 10, 26 + wave, 16);
+      ctx.strokeStyle = 'rgba(0,0,0,0.25)';
+      ctx.strokeRect(px(x + 3), px(y + 10), 26 + wave, 16);
+
+      // label bubble when close
+      const near = Math.abs((player.x + player.w/2) - (f.x + f.w/2)) < 60;
+      if (near) {
+        ctx.globalAlpha = 0.95;
+        ctx.font = '12px ui-sans-serif, system-ui';
+        const text = f.label;
+        const tw = ctx.measureText(text).width;
+        const bx = x - 8;
+        const by = y - 30;
+        ctx.fillStyle = 'rgba(0,0,0,0.55)';
+        ctx.strokeStyle = 'rgba(255,255,255,0.16)';
+        roundRect(ctx, bx, by, tw + 20, 22, 10);
+        ctx.fill();
+        ctx.stroke();
+        ctx.fillStyle = 'rgba(246,247,251,0.92)';
+        ctx.fillText(text, bx + 10, by + 15);
+      }
+
+      ctx.restore();
+    }
+
+    function roundRect(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.moveTo(x + r, y);
+      ctx.arcTo(x + w, y, x + w, y + h, r);
+      ctx.arcTo(x + w, y + h, x, y + h, r);
+      ctx.arcTo(x, y + h, x, y, r);
+      ctx.arcTo(x, y, x + w, y, r);
+      ctx.closePath();
+    }
+
+    function drawPlayer() {
+      const x = player.x - cam.x;
+      const y = player.y;
+      ctx.save();
+
+      // --- Tiny pixel "guy" sprite (no external assets) ---
+      // We keep the physics hitbox the same, but draw a little character inside it.
+      const speed = Math.min(1, Math.abs(player.vx) / WORLD.maxSpeed);
+      const walking = player.onGround && speed > 0.08;
+      const t = performance.now();
+      const frame = walking ? (Math.floor(t / 120) % 2) : 0; // 2-frame walk
+      const bob = walking ? Math.sin(t / 90) * 1.2 : 0;
+
+      // Sprite sizing inside the hitbox
+      const s = 2; // pixel scale
+      const sw = 11 * s;
+      const sh = 14 * s;
+      const ox = x + (player.w - sw) / 2;
+      const oy = y + (player.h - sh) / 2 + bob;
+
+      // Flip around center based on facing
+      ctx.translate(ox + sw / 2, 0);
+      ctx.scale(player.facing, 1);
+      ctx.translate(-(ox + sw / 2), 0);
+
+      // Colors (tweak these if you want a different "skin")
+      const C = {
+        hat: '#ff5c7a',
+        hatDark: 'rgba(0,0,0,0.20)',
+        skin: '#ffd7b0',
+        shirt: '#9ddcff',
+        pants: '#6c7a89',
+        boot: '#2b2f3a',
+        outline: 'rgba(0,0,0,0.35)'
+      };
+
+      // Helper: draw a pixel block at sprite coords
+      function p(px, py, pw, ph, color) {
+        ctx.fillStyle = color;
+        ctx.fillRect(ox + px * s, oy + py * s, pw * s, ph * s);
+      }
+
+      // Outline (subtle)
+      ctx.fillStyle = C.outline;
+      ctx.fillRect(ox + 1 * s, oy + 1 * s, (11 - 2) * s, (14 - 2) * s);
+
+      // Head
+      p(3, 2, 5, 4, C.skin);
+      // Face pixel (eye)
+      p(6, 4, 1, 1, 'rgba(0,0,0,0.55)');
+
+      // Hat (cap)
+      p(2, 1, 7, 2, C.hat);
+      p(7, 2, 2, 1, C.hat); // brim
+      p(2, 3, 1, 1, C.hatDark);
+
+      // Body (shirt)
+      p(3, 6, 5, 4, C.shirt);
+      // Arms
+      p(2, 7, 1, 2, C.skin);
+      p(8, 7, 1, 2, C.skin);
+
+      // Pants
+      p(3, 10, 5, 2, C.pants);
+
+      // Legs/boots (walk cycle)
+      if (frame === 0) {
+        // neutral stance
+        p(4, 12, 2, 1, C.boot);
+        p(6, 12, 2, 1, C.boot);
+      } else {
+        // step
+        p(4, 12, 3, 1, C.boot);
+        p(7, 12, 1, 1, C.boot);
+      }
+
+      // Small highlight to keep it readable on dark bg
+      ctx.globalAlpha = 0.20;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(ox + 3 * s, oy + 7 * s, 1 * s, 2 * s);
+      ctx.globalAlpha = 1;
+
+      // Shadow
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(x + player.w / 2, groundY() + 6, 14, 4, 0, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.restore();
+    }
+
+    function draw() {
+      const w = canvas.getBoundingClientRect().width;
+      const h = canvas.getBoundingClientRect().height;
+
+      // Clear
+      ctx.clearRect(0, 0, w, h);
+
+      // Background
+      drawSky(w, h);
+
+      // Platforms
+      for (const p of platforms) drawPlatform(p);
+
+      // Flags
+      for (const f of placedFlags) drawFlag(f);
+
+      // Ground
+      drawGround(w, h);
+
+      // Player
+      drawPlayer();
+
+      // World bounds markers (subtle)
+      ctx.save();
+      ctx.globalAlpha = 0.15;
+      ctx.fillStyle = '#fff';
+      ctx.fillRect(-cam.x, 0, 1, h);
+      ctx.fillRect(WORLD.length - cam.x, 0, 1, h);
+      ctx.restore();
+
+      // Mini “map” strip
+      drawMiniMap(w, h);
+    }
+
+    function drawMiniMap(w, h) {
+      ctx.save();
+      const pad = 12;
+      const mw = Math.min(260, w - pad * 2);
+      const mh = 12;
+      const x = w - pad - mw;
+      const y = pad;
+      ctx.globalAlpha = 0.8;
+      ctx.fillStyle = 'rgba(0,0,0,0.35)';
+      roundRect(ctx, x, y, mw, mh, 8);
+      ctx.fill();
+
+      // flags
+      for (const f of placedFlags) {
+        const fx = x + (f.x / WORLD.length) * mw;
+        ctx.fillStyle = f.discovered ? f.color : 'rgba(255,255,255,0.22)';
+        ctx.fillRect(fx, y + 3, 3, 6);
+      }
+
+      // player
+      const px = x + (player.x / WORLD.length) * mw;
+      ctx.fillStyle = '#ff5c7a';
+      ctx.fillRect(px, y + 2, 4, 8);
+
+      ctx.restore();
+    }
+
+    // Start the loop
+    requestAnimationFrame(step);
+
+    // Little quality-of-life: click canvas to dismiss intro
+    canvas.addEventListener('pointerdown', () => {
+      if (intro.style.display !== 'none') intro.style.display = 'none';
+    });
+
+    // Make sure panel doesn't instantly re-open if you're standing on a flag:
+    // Actively shove the player out of the flag hitbox so it doesn't instantly re-trigger.
+    function nudgeOffFlag() {
+      // Default behavior: eject to the RIGHT so you can keep progressing.
+      const f = placedFlags[activeFlagIndex];
+      if (f) {
+        // Put player just past the pole + collision area
+        player.x = (f.x + f.w + FLAG_EJECT_X);
+      } else {
+        player.x += 48;
+      }
+
+      // Clamp + give momentum
+      player.x = Math.max(12, Math.min(WORLD.length - 12 - player.w, player.x));
+      player.facing = 1;
+      player.vx = Math.max(player.vx, FLAG_EJECT_VX);
+
+      // Ignore flags briefly so we don't instantly pop again
+      flagCooldownUntil = performance.now() + FLAG_IGNORE_MS_AFTER_CLOSE;
+    }
+
+    closeBtn.addEventListener('click', () => {
+      hidePanel();
+      nudgeOffFlag();
+    });
+
+    window.addEventListener('keydown', (e) => {
+
+      if (e.key === 'Escape' && panel.style.display !== 'none') {
+        hidePanel();
+        nudgeOffFlag();
+      }
+    });
+
+    // Auto-close intro if user starts moving
+    const introWatcher = setInterval(() => {
+      if (intro.style.display !== 'none' && (isDown('left') || isDown('right') || isDown('jump'))) {
+        intro.style.display = 'none';
+      }
+    }, 120);
+
+  </script>
+
+  <!--
+    Recruiter-friendly fallback (copy/paste into a real cover letter if needed)
+
+    ${PROFILE.name} — ${PROFILE.role}
+
+    ${FLAGS.map(f => `- ${f.title}: ${f.body}`).join('\n')}
+
+  -->
+</body>
+</html>
